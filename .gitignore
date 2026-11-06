@@ -1,0 +1,38 @@
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+
+# Virtual muhit
+venv/
+env/
+ENV/
+.venv/
+
+# Ma'lumotlar bazasi fayllari
+*.db
+*.sqlite3
+tasks.db
+data/
+*.sqlite
+*.sqlite3
+
+# Python kesh fayllari
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# IDE sozlamalari
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Log fayllar
+*.log
+
+# Local tooling
+.pytest_cache/
+.ruff_cache/
+

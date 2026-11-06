@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Telegram Vazifa Boti — Admin Panel</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="app">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="user-info">
+                <div class="avatar" id="user-avatar">👤</div>
+                <div>
+                    <div class="user-name" id="user-name">Yuklanmoqda...</div>
+                    <div class="user-role" id="user-role">—</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-icon" id="btn-lang-toggle" title="Tilni almashtirish">🇺🇿</button>
+                <button class="btn btn-primary" id="btn-new-task">+ <span data-i18n="new_task">Yangi vazifa</span></button>
+            </div>
+        </header>
+
+        <!-- NAVIGATION TABS -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="tab-kanban">📋 <span data-i18n="tab_board">Doska</span></button>
+            <button class="tab-btn" data-tab="tab-stats">📊 <span data-i18n="tab_stats">Statistika</span></button>
+            <button class="tab-btn" data-tab="tab-users" id="nav-users-tab">👥 <span data-i18n="tab_team">Jamoa</span></button>
+            <button class="tab-btn" data-tab="tab-recurring" id="nav-rec-tab">🔄 <span data-i18n="tab_recurring">Takroriy</span></button>
+            <button class="tab-btn" data-tab="tab-export">📥 <span data-i18n="tab_export">Eksport</span></button>
+        </nav>
+
+        <!-- FILTERS BAR (Faqat Doskada ko'rinadi) -->
+        <div class="filters-bar" id="filters-bar">
+            <select id="filter-project" class="filter-select">
+                <option value="" data-i18n="all_projects">Barcha loyihalar</option>
+            </select>
+            <select id="filter-assignee" class="filter-select">
+                <option value="" data-i18n="all_assignees">Barcha xodimlar</option>
+            </select>
+            <select id="filter-priority" class="filter-select">
+                <option value="" data-i18n="all_priorities">Barcha muhimlik</option>
+                <option value="urgent">🔴 Shoshilinch</option>
+                <option value="normal">🟡 Oddiy</option>
+                <option value="low">🟢 Past</option>
+            </select>
+            <button class="btn btn-secondary btn-sm" id="btn-add-project">+ <span data-i18n="add_project">Loyiha qo'shish</span></button>
+        </div>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="content-container">
+            <!-- 1. KANBAN TAB -->
+            <section id="tab-kanban" class="tab-content active">
+                <div class="kanban-board">
+                    <!-- Ustun: Yangi -->
+                    <div class="kanban-col" data-status="new">
+                        <div class="col-header col-new">
+                            <span>🆕 <span data-i18n="status_new">Yangi</span></span>
+                            <span class="badge" id="count-new">0</span>
+                        </div>
+                        <div class="col-tasks" id="tasks-new"></div>
+                    </div>
+
+                    <!-- Ustun: Jarayonda -->
+                    <div class="kanban-col" data-status="in_progress">
+                        <div class="col-header col-prog">
+                            <span>⚡ <span data-i18n="status_in_progress">Jarayonda</span></span>
+                            <span class="badge" id="count-in_progress">0</span>
+                        </div>
+                        <div class="col-tasks" id="tasks-in_progress"></div>
+                    </div>
+
+                    <!-- Ustun: Tekshiruvda -->
+                    <div class="kanban-col" data-status="review">
+                        <div class="col-header col-review">
+                            <span>👀 <span data-i18n="status_review">Tekshiruvda</span></span>
+                            <span class="badge" id="count-review">0</span>
+                        </div>
+                        <div class="col-tasks" id="tasks-review"></div>
+                    </div>
+
+                    <!-- Ustun: Bajarildi -->
+                    <div class="kanban-col" data-status="completed">
+                        <div class="col-header col-completed">
+                            <span>✅ <span data-i18n="status_completed">Bajarildi</span></span>
+                            <span class="badge" id="count-completed">0</span>
+                        </div>
+                        <div class="col-tasks" id="tasks-completed"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. STATISTIKA TAB -->
+            <section id="tab-stats" class="tab-content">
+                <div class="stats-container">
+                    <div class="stats-header">
+                        <h2 data-i18n="stats_title">Jamoa statistikasi va KPI</h2>
+                        <div class="period-selector">
+                            <button class="btn btn-sm active" data-days="7">7 kun</button>
+                            <button class="btn btn-sm" data-days="30">30 kun</button>
+                            <button class="btn btn-sm" data-days="90">90 kun</button>
+                        </div>
+                    </div>
+
+                    <div id="top-performer-card" class="top-card" style="display:none;">
+                        <div class="top-badge">🏆 <span data-i18n="top_performer">Eng faol xodim</span></div>
+                        <h3 id="top-name">—</h3>
+                        <p id="top-details">—</p>
+                    </div>
+
+                    <div class="table-card">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="col_employee">Xodim</th>
+                                    <th data-i18n="col_total">Jami</th>
+                                    <th data-i18n="col_completed">Bajarildi</th>
+                                    <th data-i18n="col_on_time">O'z vaqtida</th>
+                                    <th data-i18n="col_delay">O'rtacha kechikish</th>
+                                </tr>
+                            </thead>
+                            <tbody id="stats-tbody">
+                                <tr><td colspan="5" class="text-center">Ma'lumotlar yuklanmoqda...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. JAMOA VA ROLLAR TAB -->
+            <section id="tab-users" class="tab-content">
+                <div class="users-container">
+                    <h2 data-i18n="team_roles_title">Jamoa a'zolari va rollar</h2>
+                    <div class="users-list" id="users-list"></div>
+                </div>
+            </section>
+
+            <!-- 4. TAKRORLANUVCHI VAZIFALAR TAB -->
+            <section id="tab-recurring" class="tab-content">
+                <div class="recurring-container">
+                    <div class="stats-header">
+                        <h2 data-i18n="tab_recurring">Takrorlanuvchi vazifalar</h2>
+                    </div>
+                    <div class="recurring-list" id="recurring-list"></div>
+                </div>
+            </section>
+
+            <!-- 5. EKSPORT TAB -->
+            <section id="tab-export" class="tab-content">
+                <div class="export-container">
+                    <div class="export-card">
+                        <div class="export-icon">📊</div>
+                        <h2>Excel / Google Sheets Eksport</h2>
+                        <p data-i18n="export_desc">Barcha vazifalar, ijrochilar, loyihalar va hisobotlarni Excel formatida yuklab oling.</p>
+                        <a href="/api/export/excel" class="btn btn-primary btn-lg" target="_blank">📥 <span data-i18n="btn_download_excel">Excel faylni yuklab olish (.xlsx)</span></a>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- MODAL: YANGI VAZIFA YARATISH -->
+        <div class="modal" id="modal-task-create">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 data-i18n="modal_create_title">Yangi vazifa yaratish</h3>
+                    <button class="btn-close" id="close-modal-task">&times;</button>
+                </div>
+                <form id="form-task-create">
+                    <div class="form-group">
+                        <label data-i18n="field_title">Vazifa nomi *</label>
+                        <input type="text" id="task-title-input" class="form-control" required placeholder="Masalan: Reels montaj...">
+                    </div>
+                    <div class="form-group">
+                        <label data-i18n="field_desc">Tavsif (ixtiyoriy)</label>
+                        <textarea id="task-desc-input" class="form-control" rows="2" placeholder="Batafsil talablar..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-half">
+                            <label data-i18n="field_assignee">Ijrochi</label>
+                            <select id="task-assignee-select" class="form-control">
+                                <option value="">Tanlanmagan</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-half">
+                            <label data-i18n="field_priority">Muhimlik</label>
+                            <select id="task-priority-select" class="form-control">
+                                <option value="urgent">🔴 Shoshilinch</option>
+                                <option value="normal" selected>🟡 Oddiy</option>
+                                <option value="low">🟢 Past</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-half">
+                            <label data-i18n="field_project">Loyiha</label>
+                            <select id="task-project-select" class="form-control">
+                                <option value="">Tanlanmagan</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-half">
+                            <label data-i18n="field_due">Muddat</label>
+                            <input type="datetime-local" id="task-due-input" class="form-control">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-create" data-i18n="cancel">Bekor qilish</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="btn_save">Yaratish</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- MODAL: VAZIFA DETALLARI VA IZOHLAR -->
+        <div class="modal" id="modal-task-details">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="detail-task-title">Vazifa detallari</h3>
+                    <button class="btn-close" id="close-modal-detail">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="detail-meta">
+                        <span class="badge" id="detail-task-priority">🔴 Shoshilinch</span>
+                        <span class="badge" id="detail-task-status">Jarayonda</span>
+                        <span class="badge" id="detail-task-project">Loyiha</span>
+                    </div>
+                    <div class="detail-row">
+                        <span>👤 <b data-i18n="field_assignee">Ijrochi:</b> <span id="detail-task-assignee">—</span></span>
+                        <span>⏰ <b data-i18n="field_due">Muddat:</b> <span id="detail-task-due">—</span></span>
+                    </div>
+                    <p class="detail-desc" id="detail-task-desc">—</p>
+
+                    <!-- Izohlar bo'limi -->
+                    <div class="comments-section">
+                        <h4>💬 <span data-i18n="comments">Izohlar</span></h4>
+                        <div class="comments-list" id="detail-comments-list"></div>
+                        <form id="form-add-comment" class="comment-form">
+                            <input type="text" id="comment-input" class="form-control" placeholder="Izoh yozing..." required>
+                            <button type="submit" class="btn btn-primary" data-i18n="btn_send">Yuborish</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: LOYIHA QO'SHISH -->
+        <div class="modal" id="modal-project-create">
+            <div class="modal-content modal-sm">
+                <div class="modal-header">
+                    <h3 data-i18n="add_project">Yangi loyiha</h3>
+                    <button class="btn-close" id="close-modal-project">&times;</button>
+                </div>
+                <form id="form-project-create">
+                    <div class="form-group">
+                        <label>Loyiha nomi *</label>
+                        <input type="text" id="project-name-input" class="form-control" placeholder="Masalan: Damoling" required>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-project" data-i18n="cancel">Bekor qilish</button>
+                        <button type="submit" class="btn btn-primary" data-i18n="btn_save">Saqlash</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
+

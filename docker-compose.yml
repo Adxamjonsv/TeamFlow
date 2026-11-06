@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: task_telegram_bot
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./tasks.db:/app/tasks.db
+    environment:
+      - TZ=Asia/Tashkent
+
